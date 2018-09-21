@@ -1,0 +1,24 @@
+---
+-
+  hosts: all
+  name: Gathering Information
+  connection: local
+  vars:
+    LTM: 192.168.254.242
+    LTM_USER: admin
+    LTM_PASSWD: admin
+  tasks:
+  - name: Collect BIG-IP facts
+    bigip_facts:
+      server: "{{ LTM }}"
+      server_port: 443
+      user: "{{ LTM_USER }}"
+      password: "{{ LTM_PASSWD }}"
+      include: pool
+      validate_certs: no
+    register: result
+  - debug:
+      var: result
+  - name: DISPLAY ONLY POOL 
+    debug:
+        var: result['ansible_facts']['pool']

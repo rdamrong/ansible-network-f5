@@ -1,0 +1,54 @@
+---
+-
+  hosts: all
+  name: Web Load Balance
+  connection: local
+  vars:
+    LTM: 192.168.254.242
+    LTM_USER: admin
+    LTM_PASSWD: admin
+    POOL_NAME: pool111
+    VIR_SERVER_NAME: vs130
+    VIR_IP: 192.168.254.131
+  tasks:
+  - name: Create Pool
+    bigip_pool:
+      server: "{{ LTM }}"
+      user: "{{ LTM_USER }}"
+      password: "{{ LTM_PASSWD }}"
+      validate_certs: no
+      state: present
+      name: "{{ POOL_NAME }}"
+      partition: Common
+      lb_method: round-robin
+      monitor_type: m_of_n
+      quorum: 1
+      monitors:
+        - http
+  - name: Add pool member
+    bigip_pool_member:
+      server: "{{ LTM }}"
+      user: "{{ LTM_USER }}"
+      password: "{{ LTM_PASSWD }}"
+      state: present
+      pool: "{{ POOL_NAME }}"
+      partition: Common
+      validate_certs: no
+      host: "{{ item }}"
+      port: 80
+    with_items:
+      - 192.168.254.180
+      - 192.168.254.210
+  - name: Create Virtual Server
+    bigip_virtual_server:
+      server: "{{ LTM }}"
+      user: "{{ LTM_USER }}"
+      password: "{{ LTM_PASSWD }}"
+      state: present
+      validate_certs: no
+      partition: Common
+      name: "{{ VIR_SERVER_NAME }}"
+      destination: "{{ VIR_IP }}"
+      port: 80
+      pool: "{{ POOL_NAME }}"
+      snat: Automap
